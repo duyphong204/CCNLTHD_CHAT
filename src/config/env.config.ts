@@ -1,5 +1,6 @@
 import { getEnv } from "../utils/get-env";
-
+import dotenv from "dotenv";
+dotenv.config();
 export const Env = {
   NODE_ENV: getEnv("NODE_ENV", "development"),
   PORT: getEnv("PORT", "8000"),
@@ -12,5 +13,4 @@ export const Env = {
   CLOUDINARY_CLOUD_NAME: getEnv("CLOUDINARY_CLOUD_NAME"),
   CLOUDINARY_API_KEY: getEnv("CLOUDINARY_API_KEY"),
   CLOUDINARY_API_SECRET: getEnv("CLOUDINARY_API_SECRET"),
-  
 } as const;
