@@ -1,17 +1,23 @@
-import { Request, Response, NextFunction } from "express";
+import { ErrorRequestHandler } from "express";
+import { HTTPSTATUS } from "../config/http.config";
+import { AppError, ErrorCodes } from "../utils/app-error";
 
-type AsyncController = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Promise<any>;
+export const errorHandler: ErrorRequestHandler = (
+  error,
+  req,
+  res,
+  next,
+): any => {
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({
+      message: error.message,
+      errorCode: error.errorCode,
+    });
+  }
 
-export const asyncHandler =
-  (controller: AsyncController) =>
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await controller(req, res, next);
-    } catch (error) {
-      next(error);
-    }
-  };
+  return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
+    message: "Internal Server Error",
+    error: error?.message || "Something went wrong",
+    errorCode: ErrorCodes.ERR_INTERNAL,
+  });
+};
