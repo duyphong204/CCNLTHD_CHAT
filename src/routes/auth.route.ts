@@ -1,16 +1,14 @@
 import { Router } from "express";
-import {
-  loginController,
-  logoutController,
-  registerController,
-  authStatusController,
-} from "../controllers/auth.controller";
 import { passportAuthenticateJwt } from "../config/passport.config";
+import { container } from "../container/di-container";
 
-const authRoutes = Router()
-  .post("/register", registerController)
-  .post("/login", loginController)
-  .post("/logout", logoutController)
-  .post("/status", passportAuthenticateJwt, authStatusController);
+const authRoutes = Router();
+const authController = container.getAuthController();
+
+authRoutes
+  .post("/register", authController.register)
+  .post("/login", authController.login)
+  .post("/logout", authController.logout)
+  .post("/status", passportAuthenticateJwt, authController.authStatus);
 
 export default authRoutes;

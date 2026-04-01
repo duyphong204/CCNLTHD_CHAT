@@ -1,26 +1,21 @@
-import UserModel from "../models/user.model";
+import { BaseRepository } from "./base.repository";
+import UserModel, { UserDocument } from "../models/user.model";
+import { IUserRepository } from "../@types/repository.interface";
 
-class UserRepository {
-  findById(userId: string) {
-    return UserModel.findById(userId);
+export class UserRepository extends BaseRepository<UserDocument> implements IUserRepository {
+  constructor() {
+    super(UserModel);
   }
 
-  findByEmail(email: string) {
-    return UserModel.findOne({ email });
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.findOne({ email });
   }
 
-  createUser(data: {
-    name: string;
-    email: string;
-    password: string;
-    avatar?: string;
-  }) {
-    return UserModel.create(data);
+  async getAllExcept(userId: string): Promise<UserDocument[]> {
+    return this.find({ _id: { $ne: userId } });
   }
 
-  findOthersWithoutPassword(userId: string) {
-    return UserModel.find({ _id: { $ne: userId } }).select("-password");
+  async findByEmailOrCreate(data: Partial<UserDocument>): Promise<UserDocument | null> {
+    return this.findOne({ email: data.email });
   }
 }
-
-export const userRepository = new UserRepository();

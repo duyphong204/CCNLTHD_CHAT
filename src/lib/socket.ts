@@ -2,7 +2,7 @@ import { Server as HTTPServer } from "http";
 import jwt from "jsonwebtoken";
 import { Server, type Socket } from "socket.io";
 import { Env } from "../config/env.config";
-import { validateChatParticipant } from "../services/chat.service";
+import { container } from "../container/di-container";
 
 // socket có thêm thuộc tính userId
 interface AuthenticatedSocket extends Socket {
@@ -73,7 +73,8 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       "chat:join",
       async (chatId: string, callback?: (err?: string) => void) => {
         try {
-          await validateChatParticipant(chatId, userId);
+          const chatService = container.getChatService();
+          await chatService.validateChatParticipant(chatId, userId);
           socket.join(`chat:${chatId}`);
           console.log(`User ${userId} join room chat:${chatId}`);
           callback?.();

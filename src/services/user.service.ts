@@ -1,10 +1,18 @@
-import { userRepository } from "../repositories/user.repository";
+import { IUserRepository } from "../@types/repository.interface";
+import { IUserService } from "../@types/service.interface";
 
-export const findByIdUserService = async (userId: string) => {
-  return await userRepository.findById(userId);
-};
+export class UserService implements IUserService {
+  private userRepository: IUserRepository;
+  constructor(userRepository: IUserRepository) {
+    this.userRepository = userRepository;
+  }
 
-export const getUsersService = async (userId: string) => {
-  const users = await userRepository.findOthersWithoutPassword(userId);
-  return users;
-};
+  async findById(userId: string) {
+    return await this.userRepository.findById(userId);
+  }
+
+  async getUsers(userId: string) {
+    const users = await this.userRepository.getAllExcept(userId);
+    return users;
+  }
+}

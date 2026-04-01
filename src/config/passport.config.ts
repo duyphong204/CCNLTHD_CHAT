@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as JwtStrategy } from "passport-jwt";
 import { UnauthorizedException } from "../utils/app-error";
 import { Env } from "./env.config";
-import { findByIdUserService } from "../services/user.service";
+import { container } from "../container/di-container";
 
 const customCookieExtractor = (req: any) => {
   const token = req?.cookies?.accessToken;
@@ -24,7 +24,8 @@ passport.use(
     async (payload, done) => {
       try {
         const userId = payload.userId;
-        const user = userId ? await findByIdUserService(userId) : null;
+        const userService = container.getUserService();
+        const user = userId ? await userService.findById(userId) : null;
 
         return done(null, user || false);
       } catch (error) {
