@@ -1,27 +1,26 @@
-import ChatModel from "../models/chat.model";
+import { BaseRepository } from "./base.repository";
+import ChatModel, { ChatDocument } from "../models/chat.model";
+import mongoose, { FilterQuery } from "mongoose";
+import { IChatRepository } from "../@types/repository.interface";
 
-class ChatRepository {
-  createChat(data: {
-    participants: string[];
-    isGroup: boolean;
-    groupName?: string;
-    createdBy: string;
-  }) {
-    return ChatModel.create(data);
+export class ChatRepository extends BaseRepository<ChatDocument> implements IChatRepository {
+  constructor() {
+    super(ChatModel);
   }
 
-  // Tìm cuộc trò chuyện 1-1 giữa hai người dùng dựa trên danh sách participantIds (phải có đúng 2 thành viên).
-  findOneToOneChatByParticipants(participantIds: string[]) {
-    return ChatModel.findOne({
-      participants: { $all: participantIds, $size: 2 },
-    }).populate("participants", "name avatar");
+  async findByParticipants(
+    participantIds: string[],
+  ): Promise<ChatDocument | null> {
+    return this.findOne({
+      participants: { $all: participantIds, $size: participantIds.length },
+    });
   }
 
-  // Tìm tất cả cuộc trò chuyện mà userId tham gia, sắp xếp theo thời gian cập nhật gần nhất.
-  findChatsByUser(userId: string) {
-    return ChatModel.find({
-      participants: { $in: [userId] },
-    })
+  async findUserChats(userId: string): Promise<ChatDocument[]> {
+    return this.model
+      .find({
+        participants: { $in: [userId] },
+      })
       .populate("participants", "name avatar")
       .populate({
         path: "lastMessage",
@@ -30,24 +29,54 @@ class ChatRepository {
           select: "name avatar",
         },
       })
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .exec();
   }
 
-  //Tìm chi tiết cuộc chat (Có Populate) theo chatId và đảm bảo userId là một participant của cuộc trò chuyện đó.
-  findChatByIdForParticipant(chatId: string, userId: string) {
-    return ChatModel.findOne({
-      _id: chatId,
-      participants: { $in: [userId] },
-    }).populate("participants", "name avatar");
+  async findByIdAndUser(
+    chatId: string,
+    userId: string,
+  ): Promise<ChatDocument | null> {
+    return this.model
+      .findOne({
+        _id: chatId,
+        participants: {
+          $in: [userId],
+        },
+      })
+      .populate("participants", "name avatar")
+      .exec();
   }
 
-  // Tìm dữ liệu chat thô (Không Populate) theo chatId và đảm bảo userId là một participant của cuộc trò chuyện đó.
-  findRawChatByIdForParticipant(chatId: string, userId: string) {
-    return ChatModel.findOne({
-      _id: chatId,
-      participants: { $in: [userId] },
-    });
+  async createGroupChat(data: {
+    participants: string[];
+    isGroup: boolean;
+    groupName: string;
+    createdBy: string;
+  }): Promise<ChatDocument> {
+    const chatData = {
+      participants: data.participants.map(
+        (id) => new mongoose.Types.ObjectId(id),
+      ),
+      isGroup: data.isGroup,
+      groupName: data.groupName,
+      createdBy: new mongoose.Types.ObjectId(data.createdBy),
+    };
+    return this.create(chatData);
+  }
+
+  async createOneOnOneChat(data: {
+    participants: string[];
+    isGroup: boolean;
+    createdBy: string;
+  }): Promise<ChatDocument> {
+    const chatData = {
+      participants: data.participants.map(
+        (id) => new mongoose.Types.ObjectId(id),
+      ),
+      isGroup: data.isGroup,
+      createdBy: new mongoose.Types.ObjectId(data.createdBy),
+    };
+    return this.create(chatData);
   }
 }
-
-export const chatRepository = new ChatRepository();

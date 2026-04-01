@@ -1,99 +1,106 @@
-import { emitNewChatToParticipants } from "../lib/socket";
-import { chatRepository } from "../repositories/chat.repository";
-import { messageRepository } from "../repositories/message.repository";
-import { userRepository } from "../repositories/user.repository";
+import { emitNewChatToParticpants } from "../lib/socket";
 import { BadRequestException } from "../utils/app-error";
+import {
+  IChatRepository,
+  IUserRepository,
+  IMessageRepository,
+} from "../@types/repository.interface";
+import { IChatService } from "../@types/service.interface";
 
-export const createChatService = async (
-  userId: string,
-  body: {
-    participantId?: string;
-    isGroup?: boolean;
-    participants?: string[]; // danh sách id người tham gia group
-    groupName?: string;
-  },
-) => {
-  const { participantId, isGroup, participants, groupName } = body;
-
-  let chat;
-  let allParticipantIds: string[] = [];
-  // Tạo group chat
-  if (isGroup && participants?.length && groupName) {
-    // Bao gồm creator + các participants
-    allParticipantIds = [userId, ...participants];
-    chat = await chatRepository.createChat({
-      participants: allParticipantIds,
-      isGroup: true,
-      groupName,
-      createdBy: userId,
-    });
-    // Tạo chat 1-1
-  } else if (participantId) {
-    const otherUser = await userRepository.findById(participantId);
-    if (!otherUser) throw new BadRequestException("Không tìm thấy người dùng");
-
-    allParticipantIds = [userId, participantId];
-    const existingChat =
-      await chatRepository.findOneToOneChatByParticipants(allParticipantIds);
-
-    if (existingChat) return existingChat;
-
-    chat = await chatRepository.createChat({
-      participants: allParticipantIds,
-      isGroup: false,
-      createdBy: userId,
-    });
+export class ChatService implements IChatService {
+  private chatRepository: IChatRepository;
+  private userRepository: IUserRepository;
+  private messageRepository: IMessageRepository;
+  constructor(
+    chatRepository: IChatRepository,
+    userRepository: IUserRepository,
+    messageRepository: IMessageRepository,
+  ) {
+    this.chatRepository = chatRepository;
+    this.userRepository = userRepository;
+    this.messageRepository = messageRepository;
   }
 
-  const populatedChat = await chat?.populate(
-    "participants",
-    "name avatar isAI",
-  );
-  // Chuyển _id của từng participant thành chuỗi (string)
-  const particpantIdStrings = populatedChat?.participants?.map((p) => {
-    return p._id?.toString();
-  });
-  // Gửi sự kiện "chat:new" đến tất cả thành viên của chat
-  emitNewChatToParticipants(particpantIdStrings, populatedChat);
-  return chat;
-};
+  async createChat(
+    userId: string,
+    body: {
+      participantId?: string;
+      isGroup?: boolean;
+      participants?: string[];
+      groupName?: string;
+    },
+  ) {
+    const { participantId, isGroup, participants, groupName } = body;
 
-export const getUserChatsService = async (userId: string) => {
-  // Lấy tất cả chat mà userId tham gia
-  const chats = chatRepository.findChatsByUser(userId);
-  return chats;
-};
+    let chat;
+    let allParticipantIds: string[] = [];
 
-export const getSingleChatService = async (chatId: string, userId: string) => {
-  const chat = await chatRepository.findChatByIdForParticipant(chatId, userId);
+    // Tạo group chat
+    if (isGroup && participants?.length && groupName) {
+      allParticipantIds = [userId, ...participants];
+      chat = await this.chatRepository.createGroupChat({
+        participants: allParticipantIds,
+        isGroup: true,
+        groupName,
+        createdBy: userId,
+      });
+      // Tạo chat 1-1
+    } else if (participantId) {
+      const otherUser = await this.userRepository.findById(participantId);
+      if (!otherUser)
+        throw new BadRequestException("Không tìm thấy người dùng");
 
-  if (!chat)
-    throw new BadRequestException(
-      "Không tìm thấy cuộc trò chuyện hoặc bạn không có quyền xem",
+      allParticipantIds = [userId, participantId];
+      const existingChat =
+        await this.chatRepository.findByParticipants(allParticipantIds);
+
+      if (existingChat) return existingChat;
+
+      chat = await this.chatRepository.createOneOnOneChat({
+        participants: allParticipantIds,
+        isGroup: false,
+        createdBy: userId,
+      });
+    }
+
+    const populatedChat = await chat?.populate(
+      "participants",
+      "name avatar isAI",
     );
+    const particpantIdStrings = populatedChat?.participants?.map((p) => {
+      return p._id?.toString();
+    });
+    emitNewChatToParticpants(particpantIdStrings, populatedChat);
+    return chat;
+  }
 
-  const messages = await messageRepository.findMessagesByChatId(chatId);
+  async getUserChats(userId: string) {
+    const chats = await this.chatRepository.findUserChats(userId);
+    return chats;
+  }
 
-  return {
-    chat,
-    messages,
-  };
-};
+  async getSingleChat(chatId: string, userId: string) {
+    const chat = await this.chatRepository.findByIdAndUser(chatId, userId);
 
-// Kiểm tra xem user có nằm trong danh sách thành viên của chat không
-export const validateChatParticipant = async (
-  chatId: string,
-  userId: string,
-) => {
-  // Tìm chat có _id khớp và chứa userId trong participants
-  const chat = await chatRepository.findRawChatByIdForParticipant(
-    chatId,
-    userId,
-  );
+    if (!chat)
+      throw new BadRequestException(
+        "Không tìm thấy cuộc trò chuyện hoặc bạn không có quyền xem",
+      );
 
-  if (!chat)
-    throw new BadRequestException(
-      "Người dùng không phải là thành viên của cuộc trò chuyện",
-    );
-  return chat; // Trả về chat hợp lệ
-};
+    const messages = await this.messageRepository.findByChatId(chatId);
+
+    return {
+      chat,
+      messages,
+    };
+  }
+
+  async validateChatParticipant(chatId: string, userId: string) {
+    const chat = await this.chatRepository.findByIdAndUser(chatId, userId);
+    if (!chat)
+      throw new BadRequestException(
+        "Người dùng không phải là thành viên của cuộc trò chuyện",
+      );
+    return chat;
+  }
+}

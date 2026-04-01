@@ -2,7 +2,7 @@ import { Server as HTTPServer } from "http";
 import jwt from "jsonwebtoken";
 import { Server, type Socket } from "socket.io";
 import { Env } from "../config/env.config";
-import { validateChatParticipant } from "../services/chat.service";
+import { container } from "../container/di-container";
 
 // socket có thêm thuộc tính userId
 interface AuthenticatedSocket extends Socket {
