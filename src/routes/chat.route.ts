@@ -1,12 +1,14 @@
 import { Router } from "express";
-import { passportAuthenticateJwt } from "../config/passport.config"
-import { createChatController, getSingleChatController, getUserChatsController } from "../controllers/chat.controller";
+import { passportAuthenticateJwt } from "../config/passport.config";
+import { container } from "../container/di-container";
 
+const chatRoutes = Router();
+const chatController = container.getChatController();
 
-const chatRoutes = Router()
+chatRoutes
   .use(passportAuthenticateJwt)
-  .post("/create",createChatController)
-  .get("/all",getUserChatsController)
-  .get("/:id",getSingleChatController)
+  .post("/create", chatController.createChat)
+  .get("/all", chatController.getUserChats)
+  .get("/:id", chatController.getSingleChat);
 
-export default chatRoutes
+export default chatRoutes;
