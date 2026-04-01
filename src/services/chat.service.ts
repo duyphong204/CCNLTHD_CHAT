@@ -1,7 +1,7 @@
 import { emitNewChatToParticpants } from "../lib/socket";
-import ChatModel from "../models/chat.model";
-import MessageModel from "../models/message.model";
-import UserModel from "../models/user.model";
+import { chatRepository } from "../repositories/chat.repository";
+import { messageRepository } from "../repositories/message.repository";
+import { userRepository } from "../repositories/user.repository";
 import { BadRequestException } from "../utils/app-error";
 
 export const createChatService = async (
@@ -20,7 +20,7 @@ export const createChatService = async (
   if (isGroup && participants?.length && groupName) {
     // Bao gồm creator + các participants
     allParticipantIds = [userId, ...participants]
-    chat = await ChatModel.create({
+    chat = await chatRepository.createChat({
       participants: allParticipantIds,
       isGroup: true,
       groupName,
@@ -28,17 +28,17 @@ export const createChatService = async (
     })
     // Tạo chat 1-1
   } else if (participantId) {
-    const otherUser = await UserModel.findById(participantId)
+    const otherUser = await userRepository.findById(participantId)
     if (!otherUser) throw new BadRequestException("Không tìm thấy người dùng")
 
     allParticipantIds = [userId, participantId]
-    const existingChat = await ChatModel.findOne({
-      participants: { $all: allParticipantIds, $size: 2 }
-    }).populate("participants", "name avatar")
+    const existingChat = await chatRepository.findOneToOneChatByParticipants(
+      allParticipantIds,
+    )
 
     if (existingChat) return existingChat
 
-    chat = await ChatModel.create({
+    chat = await chatRepository.createChat({
       participants: allParticipantIds,
       isGroup: false,
       createdBy: userId
@@ -57,44 +57,19 @@ export const createChatService = async (
 
 export const getUserChatsService = async (userId: string) => {
   // Lấy tất cả chat mà userId tham gia
-  const chats = ChatModel.find({
-    participants: { $in: [userId] } // tìm các chat mà mảng participants chứa userId
-  })
-    .populate("participants", "name avatar")
-    .populate({
-      path: "lastMessage",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    })
-    .sort({ updatedAt: -1 });
+  const chats = chatRepository.findChatsByUser(userId);
   return chats
 };
 
 export const getSingleChatService = async (chatId: string, userId: string) => {
-  const chat = await ChatModel.findOne({
-    _id: chatId,
-    participants: {
-      $in: [userId],
-    },
-  }).populate("participants", "name avatar");
+  const chat = await chatRepository.findChatByIdForParticipant(chatId, userId);
 
   if (!chat)
     throw new BadRequestException(
       "Không tìm thấy cuộc trò chuyện hoặc bạn không có quyền xem"
     );
 
-  const messages = await MessageModel.find({ chatId })
-    .populate("sender", "name avatar")
-    .populate({
-      path: "replyTo",
-      select: "content image sender",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    }).sort({ createdAt: 1 });
+  const messages = await messageRepository.findMessagesByChatId(chatId);
 
   return {
     chat,
@@ -105,10 +80,7 @@ export const getSingleChatService = async (chatId: string, userId: string) => {
 // Kiểm tra xem user có nằm trong danh sách thành viên của chat không
 export const validateChatParticipant = async (chatId: string, userId: string) => {
   // Tìm chat có _id khớp và chứa userId trong participants
-  const chat = await ChatModel.findOne({
-    _id: chatId,
-    participants: { $in: [userId] },
-  });
+  const chat = await chatRepository.findRawChatByIdForParticipant(chatId, userId);
 
   if (!chat) throw new BadRequestException("Người dùng không phải là thành viên của cuộc trò chuyện");
   return chat; // Trả về chat hợp lệ

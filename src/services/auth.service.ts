@@ -1,4 +1,4 @@
-import UserModel from "../models/user.model";
+import { userRepository } from "../repositories/user.repository";
 import { NotFoundException, UnauthorizedException } from "../utils/app-error";
 import {
   LoginSchemaType,
@@ -7,20 +7,19 @@ import {
 
 export const registerService = async (body: RegisterSchemaType) => {
   const { email } = body;
-  const existingUser = await UserModel.findOne({ email });
+  const existingUser = await userRepository.findByEmail(email);
   if (existingUser) throw new UnauthorizedException("Người dùng đã tồn tại");
-  const newUser = new UserModel({
+  const newUser = await userRepository.createUser({
     name: body.name,
     email: body.email,
     password: body.password,
     avatar: body.avatar,
   });
-  await newUser.save();
   return newUser;
 };
 export const loginService = async (body: LoginSchemaType) => {
   const { email, password } = body;
-  const user = await UserModel.findOne({ email });
+  const user = await userRepository.findByEmail(email);
   if (!user) throw new NotFoundException("Email không chính xác");
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid)
