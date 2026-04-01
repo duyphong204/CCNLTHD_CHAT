@@ -13,20 +13,20 @@ export interface MessageDocument extends Document {
 const messageSchema = new Schema<MessageDocument>(
   {
     chatId: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId, // Tin nhắn này thuộc về cuộc hội thoại nào (Quan hệ 1-n).
       ref: "Chat",
       required: true,
     },
-    content: { type: String },
+    content: { type: String }, // Nội dung tin nhắn bằng văn bản (text).
     image: { type: String },
-    sender: {
+    sender: { // Người gửi tin nhắn này.
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     replyTo: {
       type: Schema.Types.ObjectId,
-      ref: "Message",
+      ref: "Message", // Tham chiếu đến tin nhắn gốc nếu đây là một tin nhắn trả lời (Reply).
       default: null,
     },
   },

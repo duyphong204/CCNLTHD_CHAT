@@ -37,7 +37,9 @@ export const initializeSocket = (httpServer: HTTPServer) => {
 
       if (!token) return next(new Error("Không được phép"));
 
-      const decodedToken = jwt.verify(token, Env.JWT_SECRET) as { userId: string };
+      const decodedToken = jwt.verify(token, Env.JWT_SECRET) as {
+        userId: string;
+      };
       if (!decodedToken) return next(new Error("Không được phép"));
 
       socket.userId = decodedToken.userId;
@@ -67,17 +69,19 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     socket.join(`user:${userId}`);
 
     // khi user tham gia phòng chat
-    socket.on("chat:join", async (chatId: string, callback?: (err?: string) => void) => {
-      try {
-        const chatService = container.getChatService();
-        await chatService.validateChatParticipant(chatId, userId);
-        socket.join(`chat:${chatId}`);
-        console.log(`User ${userId} join room chat:${chatId}`);
-        callback?.();
-      } catch (error) {
-        callback?.("Lỗi khi tham gia cuộc trò chuyện");
-      }
-    });
+    socket.on(
+      "chat:join",
+      async (chatId: string, callback?: (err?: string) => void) => {
+        try {
+          await validateChatParticipant(chatId, userId);
+          socket.join(`chat:${chatId}`);
+          console.log(`User ${userId} join room chat:${chatId}`);
+          callback?.();
+        } catch (error) {
+          callback?.("Lỗi khi tham gia cuộc trò chuyện");
+        }
+      },
+    );
 
     // khi user rời phòng chat
     socket.on("chat:leave", (chatId: string) => {
@@ -105,7 +109,10 @@ function getIO() {
 }
 
 // gửi sự kiện tạo chat mới đến các thành viên
-export const emitNewChatToParticpants = (participantIds: string[] = [], chat: any) => {
+export const emitNewChatToParticipants = (
+  participantIds: string[] = [],
+  chat: any,
+) => {
   const io = getIO();
   for (const participantId of participantIds) {
     io.to(`user:${participantId}`).emit("chat:new", chat);
@@ -116,7 +123,7 @@ export const emitNewChatToParticpants = (participantIds: string[] = [], chat: an
 export const emitNewMessageToChatRoom = (
   senderId: string,
   chatId: string,
-  message: any
+  message: any,
 ) => {
   const io = getIO();
   const senderSocketId = onlineUsers.get(senderId?.toString());
@@ -136,7 +143,7 @@ export const emitNewMessageToChatRoom = (
 export const emitLastMessageToParticipants = (
   participantIds: string[],
   chatId: string,
-  lastMessage: any
+  lastMessage: any,
 ) => {
   const io = getIO();
   const payload = { chatId, lastMessage };
