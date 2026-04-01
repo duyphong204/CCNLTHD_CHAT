@@ -12,7 +12,7 @@ export interface ChatDocument extends Document {
 
 const chatSchema = new Schema<ChatDocument>(
   {
-    participants: [
+    participants: [ // Danh sách các thành viên tham gia cuộc trò chuyện (Ref đến User).
       {
         type: Schema.Types.ObjectId,
         ref: "User",

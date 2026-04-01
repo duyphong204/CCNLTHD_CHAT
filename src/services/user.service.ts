@@ -1,12 +1,10 @@
-import UserModel from "../models/user.model";
+import { userRepository } from "../repositories/user.repository";
 
 export const findByIdUserService = async (userId: string) => {
-  return await UserModel.findById(userId);
+  return await userRepository.findById(userId);
 };
 
 export const getUsersService = async (userId: string) => {
-  const users = await UserModel.find({ _id: { $ne: userId } }).select(
-    "-password",
-  );
+  const users = await userRepository.findOthersWithoutPassword(userId);
   return users;
 };

@@ -1,33 +1,48 @@
-import dotenv from "dotenv";
-import express from "express";
+import "dotenv/config";
+import express, { Request, Response } from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import path from "path";
+import { Env } from "./config/env.config";
+import { asyncHandler } from "./middlewares/asyncHandler.middleware";
+import { HTTPSTATUS } from "./config/http.config";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 import connecDB from "./config/database.config";
-import morgan from "morgan";
-import rootRouter from "./routes/index";
-
-dotenv.config();
+import passport, { initialize } from "passport";
+import "./config/passport.config";
+import http from "http";
+import { initializeSocket } from "./lib/socket";
+import routes from "./routes";
+// import viewRoutes from './routes/view.route'
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const server = http.createServer(app);
 
-app.use(express.json());
-app.use(morgan("dev"));
+// socket
+initializeSocket(server);
 
-app.use("/api", rootRouter);
+// Cấu hình EJS Engine
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-app.get("/", (req, res) => {
-  res.send("Server đang chạy ngon luôn!");
+// Cấu hình thư mục static cho CSS, JS, images
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+
+app.use(passport.initialize());
+
+// Routes views
+// app.use("/", viewRoutes);
+
+// Routes API
+app.use("/api", routes);
+
+app.use(errorHandler);
+
+server.listen(Env.PORT, async () => {
+  await connecDB();
+  console.log(`server running ${Env.PORT}`);
 });
-const startServer = async () => {
-  try {
-    await connecDB();
-
-    app.listen(PORT, () => {
-      console.log(`Server is running at http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error("Lỗi khởi động hệ thống:", error);
-    process.exit(1);
-  }
-};
-
-startServer();
