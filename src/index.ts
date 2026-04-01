@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import express from "express";
-import connecDB from "./config/database.config";
+import connectDB from "./config/database.config";
 import morgan from "morgan";
 import rootRouter from "./routes/index";
 
@@ -19,7 +19,7 @@ app.get("/", (req, res) => {
 });
 const startServer = async () => {
   try {
-    await connecDB();
+    await connectDB();
 
     app.listen(PORT, () => {
       console.log(`Server is running at http://localhost:${PORT}`);
