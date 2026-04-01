@@ -1,8 +1,10 @@
 import dotenv from "dotenv";
 import express from "express";
-import connectDB from "./config/database.config";
+import connecDB from "./config/database.config";
 import morgan from "morgan";
 import rootRouter from "./routes/index";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.config";
 
 dotenv.config();
 
@@ -13,13 +15,14 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/api", rootRouter);
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
   res.send("Server đang chạy ngon luôn!");
 });
 const startServer = async () => {
   try {
-    await connectDB();
+    await connecDB();
 
     app.listen(PORT, () => {
       console.log(`Server is running at http://localhost:${PORT}`);
