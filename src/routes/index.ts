@@ -4,5 +4,5 @@ import chatRoutes from "./chat.route";
 
 const router = Router();
 router.use("/auth", authRoutes);
-router.use("/chat",chatRoutes)
+router.use("/chat", chatRoutes)
 export default router;
