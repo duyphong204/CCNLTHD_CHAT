@@ -3,6 +3,7 @@
 Backend cho đồ án **“Tìm hiểu và xây dựng dịch vụ Backend với Express”** (Messenger/Chat backend).
 
 Hệ thống cung cấp:
+
 - REST API cho **Auth** và **Chat**.
 - **Swagger UI** để xem tài liệu API.
 - Kết nối **MongoDB** qua **Mongoose**.
@@ -22,6 +23,7 @@ Hệ thống cung cấp:
 - **Swagger (OpenAPI)**: tài liệu API tại `/docs`.
 - **Socket.IO**: realtime.
 - **Morgan**: logging request.
+- **Docker & Docker Compose**: containerization & orchestration.
 
 ---
 
@@ -46,10 +48,18 @@ Dự án tổ chức theo hướng phân lớp (layered):
 
 ### 3.1 Yêu cầu
 
+**Option 1: Chạy Local**
+
 - Node.js (khuyến nghị >= 18)
 - MongoDB (local hoặc MongoDB Atlas)
 
-### 3.2 Cài dependencies
+**Option 2: Chạy với Docker**
+
+- Docker & Docker Compose
+
+---
+
+### 3.2 Cài dependencies (Local only)
 
 ```bash
 npm install
@@ -78,7 +88,7 @@ CLOUDINARY_API_SECRET=
 
 ### 3.4 Chạy server
 
-Theo `package.json`:
+#### **Cách 1: Chạy Local**
 
 - Chạy dev (nodemon):
 
@@ -89,45 +99,126 @@ npm run dev
 - Chạy production (cần build ra `dist/` trước):
 
 ```bash
-npm run start
+npm run build
+npm start
 ```
 
-> Ghi chú: script `start` đang chạy `node dist/index.ts`, vì vậy cần đảm bảo bạn có bước build TypeScript ra thư mục `dist/` khi deploy.
+#### **Cách 2: Chạy với Docker Compose (Khuyến nghị)**
+
+```bash
+docker compose up --build
+```
+
+**Lợi ích:**
+
+- ✅ Tự động cài đặt dependencies
+- ✅ MongoDB chạy trong container
+- ✅ Hot reload với nodemon
+- ✅ Không cần cài MongoDB locally
+- ✅ Môi trường giống nhất với production
+
+**Dừng services:**
+
+```bash
+docker compose down
+```
+
+**Xem logs:**
+
+```bash
+docker compose logs -f app
+```
+
+**Reset hoàn toàn (xóa MongoDB data):**
+
+```bash
+docker compose down -v
+docker compose up --build
+```
 
 ---
 
-## 4) Endpoints & Swagger
+## 4) Docker Configuration
 
-### 4.1 Swagger UI
+### 4.1 Files
+
+- **Dockerfile**: Build production-ready image
+- **docker-compose.yml**: Orchestrate app + MongoDB services
+- **.dockerignore**: Exclude unnecessary files
+
+### 4.2 Docker Environment
+
+Docker Compose tự động cấu hình:
+
+```yaml
+App Service:
+  - Port: 8000
+  - Environment: NODE_ENV=development
+  - MongoDB: mongodb://admin:password123@mongodb:27017/chat_db
+  - Hot reload: Enabled (nodemon + volume)
+
+MongoDB Service:
+  - Port: 27017
+  - Username: admin
+  - Password: password123
+  - Volume: Persist data in named volume
+```
+
+### 4.3 Troubleshooting Docker
+
+**Container không chạy?**
+
+```bash
+# Xem logs chi tiết
+docker compose logs app
+
+# Rebuild từ đầu
+docker compose build --no-cache
+docker compose up
+```
+
+**Port đã sử dụng?**
+
+Sửa port trong `docker-compose.yml` hoặc dừng process sử dụng port.
+
+---
+
+## 5) Endpoints & Swagger
+
+### 5.1 Swagger UI
 
 - Swagger UI: `GET /docs`
 
-### 4.2 API chính (đã gồm prefix `/api`)
+### 5.2 API chính (đã gồm prefix `/api`)
 
 **Auth**
+
 - `POST /api/auth/register` — Đăng ký
 - `POST /api/auth/login` — Đăng nhập
 - `POST /api/auth/logout` — Đăng xuất
 - `POST /api/auth/status` — Kiểm tra trạng thái đăng nhập (cần JWT cookie)
 
 **Chat (cần đăng nhập)**
+
 - `POST /api/chat/create` — Tạo chat 1-1 hoặc group
 - `GET /api/chat/all` — Lấy danh sách chat của user
 - `GET /api/chat/:id` — Lấy chi tiết chat + messages
 
 ---
 
-## 5) Xác thực (JWT Cookie)
+## 6) Xác thực (JWT Cookie)
 
 Hệ thống dùng **JWT lưu trong cookie** tên `accessToken`:
+
 - Cookie dạng `httpOnly` giúp hạn chế rủi ro bị JS đọc token.
 - Passport-JWT đọc token từ cookie, verify và gắn user vào `req.user`.
 
 ---
 
-## 6) Realtime (Socket.IO)
+## 7) Realtime (Socket.IO)
 
 Module realtime nằm ở `src/lib/socket.ts`:
+
 - Xác thực socket bằng JWT lấy từ cookie trong handshake.
 - Quản lý user online (`userId -> socketId`).
 - Rooms:
@@ -135,6 +226,7 @@ Module realtime nằm ở `src/lib/socket.ts`:
   - `chat:<chatId>`: room theo cuộc trò chuyện
 
 Sự kiện phổ biến:
+
 - `online:users`: broadcast danh sách user online
 - `chat:join`, `chat:leave`: tham gia/rời room chat
 - `chat:new`: tạo chat mới
@@ -143,7 +235,7 @@ Sự kiện phổ biến:
 
 ---
 
-## 7) Gợi ý kiểm thử
+## 8) Gợi ý kiểm thử
 
 - Dùng **Postman** để test REST API.
 - Với các API cần đăng nhập: đăng nhập trước để nhận cookie `accessToken`, sau đó gọi các endpoint protected.
