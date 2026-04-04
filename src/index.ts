@@ -14,6 +14,7 @@ import { swaggerSpec } from "./config/swagger.config";
 import cors from "cors";
 import express, { Request, Response } from "express";
 import "dotenv/config";
+import viewRouter from "./routes/view.route";
 
 const app = express();
 const server = http.createServer(app);
@@ -22,8 +23,8 @@ const server = http.createServer(app);
 initializeSocket(server);
 
 // Cấu hình EJS Engine
-// app.set("view engine", "ejs");
-// app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 // Cấu hình thư mục static cho CSS, JS, images
 app.use(express.static(path.join(__dirname, "public")));
@@ -42,10 +43,10 @@ app.use(passport.initialize());
 app.use(passport.initialize());
 
 // Routes API
+app.use("/", viewRouter);
 app.use("/api", rootRouter);
 app.use("/", rootRouter);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 app.use(errorHandler);
 
 server.listen(Env.PORT, async () => {
