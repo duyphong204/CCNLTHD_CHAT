@@ -1,4 +1,7 @@
-import { RegisterSchemaType, LoginSchemaType } from "../validators/auth.validator";
+import {
+  RegisterSchemaType,
+  LoginSchemaType,
+} from "../validators/auth.validator";
 import { UserDocument } from "../models/user.model";
 import { ChatDocument } from "../models/chat.model";
 import { MessageDocument } from "../models/message.model";
@@ -41,4 +44,16 @@ export interface IChatService {
     chatId: string,
     userId: string,
   ): Promise<ChatDocument>;
+}
+
+export interface IMessageService {
+  sendMessageService(
+    userId: string,
+    body: {
+      chatId: string;
+      content?: string;
+      image?: string;
+      replyToId?: string;
+    },
+  ): Promise<any>;
 }

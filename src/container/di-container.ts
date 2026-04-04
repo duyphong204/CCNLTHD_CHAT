@@ -14,6 +14,7 @@ import {
   IAuthService,
   IUserService,
   IChatService,
+  IMessageService,
 } from "../@types/service.interface";
 
 // Concrete implementations
@@ -22,6 +23,7 @@ import { MessageRepository } from "../repositories/message.repository";
 import { UserRepository } from "../repositories/user.repository";
 import { AuthService } from "../services/auth.service";
 import { ChatService } from "../services/chat.service";
+import { MessageService } from "../services/message.service";
 import { UserService } from "../services/user.service";
 import { AuthController } from "../controllers/auth.controller";
 import { ChatController } from "../controllers/chat.controller";
@@ -38,6 +40,7 @@ class DIContainer {
   private _authService: IAuthService | null = null;
   private _userService: IUserService | null = null;
   private _chatService: IChatService | null = null;
+  private _messageService: IMessageService | null = null;
 
   // Controllers
   private _authController: AuthController | null = null;
@@ -102,6 +105,16 @@ class DIContainer {
     return this._chatService;
   }
 
+  getMessageService(): IMessageService {
+    if (!this._messageService) {
+      this._messageService = new MessageService(
+        this.getMessageRepository(),
+        this.getChatRepository(),
+      );
+    }
+    return this._messageService;
+  }
+
   // ─── Controller Getters ───────────────────────────────────────────
 
   getAuthController(): AuthController {
@@ -127,6 +140,7 @@ class DIContainer {
     this._authService = null;
     this._userService = null;
     this._chatService = null;
+    this._messageService = null;
     this._authController = null;
     this._chatController = null;
   }

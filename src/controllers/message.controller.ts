@@ -2,7 +2,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { Request, Response } from "express";
 import { sendMessageSchema } from "../validators/message.validator";
 import { HTTPSTATUS } from "../config/http.config";
-import { sendMessageService } from "../services/message.service";
+import { container } from "../container/di-container";
 
 export const sendMessageController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -10,7 +10,8 @@ export const sendMessageController = asyncHandler(
     console.log("req.user", req.user);
     const body = sendMessageSchema.parse(req.body);
     console.log("req.body", req.body);
-    const result = await sendMessageService(userId, body);
+    const messageService = container.getMessageService();
+    const result = await messageService.sendMessageService(userId, body);
     return res.status(HTTPSTATUS.OK).json({
       message: "Gửi tin nhắn thành công",
       ...result,
