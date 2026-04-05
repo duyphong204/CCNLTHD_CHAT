@@ -2,6 +2,10 @@ import {
   RegisterSchemaType,
   LoginSchemaType,
 } from "../validators/auth.validator";
+import {
+  UpdateProfileSchemaType,
+  ChangePasswordSchemaType,
+} from "../validators/user.validator";
 import { UserDocument } from "../models/user.model";
 import { ChatDocument } from "../models/chat.model";
 import { MessageDocument } from "../models/message.model";
@@ -19,7 +23,14 @@ export interface IAuthService {
  */
 export interface IUserService {
   findById(userId: string): Promise<UserDocument | null>;
+  getMyProfile(userId: string): Promise<UserDocument>;
+  getUserProfileById(userId: string): Promise<UserDocument>;
   getUsers(userId: string): Promise<UserDocument[]>;
+  updateProfile(
+    userId: string,
+    body: UpdateProfileSchemaType,
+  ): Promise<UserDocument>;
+  changePassword(userId: string, body: ChangePasswordSchemaType): Promise<void>;
 }
 
 /**

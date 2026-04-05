@@ -2,7 +2,10 @@ import { BaseRepository } from "./base.repository";
 import UserModel, { UserDocument } from "../models/user.model";
 import { IUserRepository } from "../@types/repository.interface";
 
-export class UserRepository extends BaseRepository<UserDocument> implements IUserRepository {
+export class UserRepository
+  extends BaseRepository<UserDocument>
+  implements IUserRepository
+{
   constructor() {
     super(UserModel);
   }
@@ -15,7 +18,9 @@ export class UserRepository extends BaseRepository<UserDocument> implements IUse
     return this.find({ _id: { $ne: userId } });
   }
 
-  async findByEmailOrCreate(data: Partial<UserDocument>): Promise<UserDocument | null> {
+  async findByEmailOrCreate(
+    data: Partial<UserDocument>,
+  ): Promise<UserDocument | null> {
     return this.findOne({ email: data.email });
   }
 }

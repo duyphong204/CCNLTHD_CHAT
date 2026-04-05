@@ -67,10 +67,10 @@ export class ChatService {
       "participants",
       "name avatar isAI",
     );
-    const particpantIdStrings = populatedChat?.participants?.map((p) => {
+    const participantIdStrings = populatedChat?.participants?.map((p) => {
       return p._id?.toString();
     });
-    emitNewChatToParticipants(particpantIdStrings, populatedChat);
+    emitNewChatToParticipants(participantIdStrings, populatedChat);
     return chat;
   }
 

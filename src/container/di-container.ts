@@ -28,6 +28,7 @@ import { UserService } from "../services/user.service";
 import { AuthController } from "../controllers/auth.controller";
 import { ChatController } from "../controllers/chat.controller";
 import { MessageController } from "../controllers/message.controller";
+import { UserController } from "../controllers/user.controller";
 
 class DIContainer {
   private static instance: DIContainer;
@@ -47,6 +48,7 @@ class DIContainer {
   private _authController: AuthController | null = null;
   private _chatController: ChatController | null = null;
   private _messageController: MessageController | null = null;
+  private _userController: UserController | null = null;
 
   private constructor() {}
 
@@ -140,6 +142,13 @@ class DIContainer {
     return this._messageController;
   }
 
+  getUserController(): UserController {
+    if (!this._userController) {
+      this._userController = new UserController(this.getUserService());
+    }
+    return this._userController;
+  }
+
   // ─── Reset (dùng cho testing) ─────────────────────────────────────
 
   reset(): void {
@@ -153,6 +162,7 @@ class DIContainer {
     this._authController = null;
     this._chatController = null;
     this._messageController = null;
+    this._userController = null;
   }
 }
 

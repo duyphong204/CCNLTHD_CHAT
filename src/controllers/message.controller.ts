@@ -1,4 +1,4 @@
-import { asyncHandler } from "../middlewares/asyncHandler.middleware";
+import { asyncHandler } from "../utils/asyncHandler.middleware";
 import { Request, Response } from "express";
 import {
   sendMessageSchema,
