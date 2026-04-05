@@ -21,12 +21,6 @@ services:
     environment:
       NODE_ENV: development
       PORT: 8000
-      JWT_SECRET: dnvsavkkjvsdjkvjsdvsdkvnsdkjn
-      JWT_EXPIRES_IN: 7d
-      FRONTEND_ORIGIN: http://localhost:5173
-      CLOUDINARY_CLOUD_NAME: dr7oleeqy
-      CLOUDINARY_API_KEY: 817719924457297
-      CLOUDINARY_API_SECRET: 92tlk4EiLNNzaM52bfmKj0UEIlE
     depends_on:
       - mongodb
     volumes:
