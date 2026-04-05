@@ -75,6 +75,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       "chat:join",
       async (chatId: string, callback?: (err?: string) => void) => {
         try {
+          const chatService = container.getChatService();
           await chatService.validateChatParticipant(chatId, userId);
           socket.join(`chat:${chatId}`);
           console.log(`User ${userId} join room chat:${chatId}`);

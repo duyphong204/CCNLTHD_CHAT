@@ -56,3 +56,15 @@ export interface IChatService {
     userId: string,
   ): Promise<ChatDocument>;
 }
+
+export interface IMessageService {
+  sendMessageService(
+    userId: string,
+    body: {
+      chatId: string;
+      content?: string;
+      image?: string;
+      replyToId?: string;
+    },
+  ): Promise<any>;
+}

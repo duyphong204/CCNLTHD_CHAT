@@ -6,11 +6,6 @@ import { container } from "../container/di-container";
 const chatRoutes = Router();
 const chatController = container.getChatController();
 
-chatRoutes
-  .use(passportAuthenticateJwt)
-  .post("/create", chatController.createChat)
-  .post("/message/send", sendMessageController)
-  .get("/all", chatController.getUserChats)
-  .get("/:id", chatController.getSingleChat);
+chatRoutes.use(passportAuthenticateJwt).post("/send", sendMessageController);
 
 export default chatRoutes;
