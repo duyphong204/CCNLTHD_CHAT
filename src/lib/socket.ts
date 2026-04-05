@@ -15,6 +15,8 @@ let io: Server | null = null;
 const onlineUsers = new Map<string, string>();
 
 export const initializeSocket = (httpServer: HTTPServer) => {
+  const chatService = container.getChatService();
+
   io = new Server(httpServer, {
     cors: {
       origin: Env.FRONTEND_ORIGIN,
