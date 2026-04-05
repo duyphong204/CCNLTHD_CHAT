@@ -40,7 +40,10 @@ export const changePasswordSchema = z
   });
 
 export const userIdParamSchema = z.object({
-  id: z.string().trim().min(1, "Id người dùng là bắt buộc"),
+  id: z
+    .string()
+    .trim()
+    .regex(/^[a-f\d]{24}$/i, "Id người dùng không hợp lệ"),
 });
 
 export type UpdateProfileSchemaType = z.infer<typeof updateProfileSchema>;

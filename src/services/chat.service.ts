@@ -1,5 +1,4 @@
 import { emitNewChatToParticipants } from "../lib/socket";
-import { emitNewChatToParticipants } from "../lib/socket";
 import { BadRequestException } from "../utils/app-error";
 import {
   IChatRepository,

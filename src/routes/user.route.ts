@@ -9,8 +9,8 @@ userRoutes
   .use(passportAuthenticateJwt)
   .get("/me", userController.getMyProfile)
   .get("/all", userController.getUsers)
-  .get("/:id", userController.getUserProfileById)
   .patch("/profile", userController.updateProfile)
-  .patch("/change-password", userController.changePassword);
+  .patch("/change-password", userController.changePassword)
+  .get("/:id", userController.getUserProfileById);
 
 export default userRoutes;
