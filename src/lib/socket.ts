@@ -15,6 +15,8 @@ let io: Server | null = null;
 const onlineUsers = new Map<string, string>();
 
 export const initializeSocket = (httpServer: HTTPServer) => {
+  const chatService = container.getChatService();
+
   io = new Server(httpServer, {
     cors: {
       origin: Env.FRONTEND_ORIGIN,
@@ -73,7 +75,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       "chat:join",
       async (chatId: string, callback?: (err?: string) => void) => {
         try {
-          await validateChatParticipant(chatId, userId);
+          await chatService.validateChatParticipant(chatId, userId);
           socket.join(`chat:${chatId}`);
           console.log(`User ${userId} join room chat:${chatId}`);
           callback?.();

@@ -1,4 +1,4 @@
-import { emitNewChatToParticpants } from "../lib/socket";
+import { emitNewChatToParticipants } from "../lib/socket";
 import { BadRequestException } from "../utils/app-error";
 import {
   IChatRepository,
@@ -67,10 +67,10 @@ export class ChatService implements IChatService {
       "participants",
       "name avatar isAI",
     );
-    const particpantIdStrings = populatedChat?.participants?.map((p) => {
+    const participantIdStrings = populatedChat?.participants?.map((p) => {
       return p._id?.toString();
     });
-    emitNewChatToParticpants(particpantIdStrings, populatedChat);
+    emitNewChatToParticipants(participantIdStrings, populatedChat);
     return chat;
   }
 
