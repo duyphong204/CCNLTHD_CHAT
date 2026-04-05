@@ -9,6 +9,6 @@ authRoutes
   .post("/register", authController.register)
   .post("/login", authController.login)
   .post("/logout", authController.logout)
-  .post("/status", passportAuthenticateJwt, authController.authStatus);
+  .get("/status", passportAuthenticateJwt, authController.authStatus);
 
 export default authRoutes;

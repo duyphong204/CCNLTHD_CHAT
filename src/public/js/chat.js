@@ -46,6 +46,11 @@ const cancelReplyBtn = document.getElementById("cancelReplyBtn");
 const imagePreview = document.getElementById("imagePreview");
 const previewImg = document.getElementById("previewImg");
 const removeImageBtn = document.getElementById("removeImageBtn");
+const editMessageModal = document.getElementById("editMessageModal");
+const editMessageForm = document.getElementById("editMessageForm");
+const editMessageInput = document.getElementById("editMessageInput");
+const editMessageId = document.getElementById("editMessageId");
+const btnCancelEdit = document.querySelector(".btn-cancel-edit");
 
 initializeUI();
 
@@ -91,7 +96,6 @@ socket.on("message:new", (message) => {
   updateChatLastMessage(chatId, message);
 });
 
-// Backend emit event nay la chat:new
 socket.on("chat:new", (chat) => {
   upsertChatCache(chat);
   displayChats(getFilteredChats(searchChat.value));
@@ -100,6 +104,28 @@ socket.on("chat:new", (chat) => {
 socket.on("chat:update", ({ chatId, lastMessage }) => {
   if (!chatId || !lastMessage) return;
   updateChatLastMessage(chatId, lastMessage);
+});
+
+socket.on("message:edit", (editedMessage) => {
+  const chatId = normalizeId(editedMessage.chatId);
+  if (!chatId) return;
+
+  upsertMessageCache(chatId, editedMessage);
+  if (chatId === currentChatId) {
+    updateMessageInUI(editedMessage);
+  }
+
+  updateChatLastMessage(chatId, editedMessage);
+});
+
+socket.on("message:delete", (deletedMessage) => {
+  const chatId = normalizeId(deletedMessage.chatId);
+  if (!chatId) return;
+
+  upsertMessageCache(chatId, deletedMessage);
+  if (chatId === currentChatId) {
+    updateMessageInUI(deletedMessage);
+  }
 });
 
 // ========================
@@ -216,7 +242,13 @@ function displayMessages(chat, messages) {
 
   chatStatus.textContent = getChatStatusText(chat);
 
-  messagesArea.innerHTML = (messages || []).map(renderMessageItem).join("");
+  messages.forEach((element) => {
+    console.log(element);
+  });
+
+  messagesArea.innerHTML = (messages || [])
+    .map((msg) => renderMessageItem(msg))
+    .join("");
 
   messagesArea.scrollTop = messagesArea.scrollHeight;
   setElementVisible(chatContent, true, DISPLAY_FLEX);
@@ -225,25 +257,42 @@ function displayMessages(chat, messages) {
 
 function renderMessageItem(msg) {
   const senderId = normalizeId(msg.sender);
+  console.log(currentUser);
   const senderName =
     typeof msg.sender === "object" ? msg.sender?.name || "" : "";
   const replySenderName =
     typeof msg.replyTo?.sender === "object"
       ? msg.replyTo.sender?.name || ""
       : "";
+  const isOwnMessage = senderId === normalizeId(currentUser?._id);
+  const isDeleted = msg.isDeleted;
+
+  if (isDeleted) {
+    return `
+      <div class="message deleted ${isOwnMessage ? "own" : "other"}" data-message-id="${normalizeId(msg._id)}">
+        <div class="message-bubble">
+          <div class="message-text deleted"><em>[Tin nhắn đã bị xóa]</em></div>
+        </div>
+      </div>
+    `;
+  }
 
   return `
-    <div class="message ${senderId === normalizeId(currentUser?._id) ? "own" : "other"}" data-message-id="${normalizeId(msg._id)}">
+    <div class="message ${isOwnMessage ? "own" : "other"}" data-message-id="${normalizeId(msg._id)}">
       <div class="message-bubble">
         ${
           msg.replyTo
             ? `<div class="reply-badge"><strong>${escapeHtml(replySenderName || "Tin nhắn cũ")}</strong><div>${escapeHtml(msg.replyTo.content || "[Ảnh]")}</div></div>`
             : ""
         }
-        ${msg.content ? `<div class="message-text">${escapeHtml(msg.content)}</div>` : ""}
+        ${msg.content ? `<div class="message-text">${escapeHtml(msg.content)}${msg.isEdit ? ' <span class="edited-indicator">(đã chỉnh sửa)</span>' : ""}</div>` : ""}
         ${msg.image ? `<div class="message-image"><img src="${msg.image}" alt="Ảnh tin nhắn" /></div>` : ""}
         <div class="message-time">${formatTime(msg.createdAt)}</div>
-        <button type="button" class="reply-btn" data-message-id="${normalizeId(msg._id)}" data-sender-name="${escapeHtml(senderName)}">Trả lời</button>
+        <div class="message-actions">
+          <button type="button" class="reply-btn" data-message-id="${normalizeId(msg._id)}" data-sender-name="${escapeHtml(senderName)}">Trả lời</button>
+          ${isOwnMessage ? `<button type="button" class="edit-btn" data-message-id="${normalizeId(msg._id)}">Chỉnh sửa</button>` : ""}
+          ${isOwnMessage ? `<button type="button" class="delete-btn" data-message-id="${normalizeId(msg._id)}">Xóa</button>` : ""}
+        </div>
       </div>
     </div>
   `;
@@ -256,6 +305,20 @@ function addMessageToUI(message) {
   if (element) {
     messagesArea.appendChild(element);
     messagesArea.scrollTop = messagesArea.scrollHeight;
+  }
+}
+
+function updateMessageInUI(editedMessage) {
+  const messageElement = document.querySelector(
+    `[data-message-id="${normalizeId(editedMessage._id)}"]`,
+  );
+  if (messageElement) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = renderMessageItem(editedMessage).trim();
+    const newElement = wrapper.firstElementChild;
+    if (newElement) {
+      messageElement.replaceWith(newElement);
+    }
   }
 }
 
@@ -301,6 +364,10 @@ function bindUIEvents() {
   cancelReplyBtn.addEventListener("click", clearReply);
   imageInput.addEventListener("change", handleImageInputChange);
   removeImageBtn.addEventListener("click", clearImageAttachment);
+  editMessageForm.addEventListener("submit", handleEditMessageFormSubmit);
+  btnCancelEdit.addEventListener("click", () =>
+    setEditMessageModalVisible(false),
+  );
 }
 
 async function handleChatListClick(e) {
@@ -374,7 +441,7 @@ async function handleMessageFormSubmit(e) {
       replyToId: replyToMessage?._id,
     };
 
-    const data = await fetchJSON("/api/chat/message/send", {
+    const data = await fetchJSON("/api/message/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -447,17 +514,42 @@ function handleSearchUserInput() {
 
 function handleMessagesAreaClick(e) {
   const replyBtn = e.target.closest(".reply-btn");
-  if (!replyBtn) return;
+  if (replyBtn) {
+    const messageId = replyBtn.dataset.messageId;
+    const senderName = replyBtn.dataset.senderName || "Người dùng";
+    if (!messageId || !currentChatId) return;
 
-  const messageId = replyBtn.dataset.messageId;
-  const senderName = replyBtn.dataset.senderName || "Người dùng";
-  if (!messageId || !currentChatId) return;
+    const selectedMessage = getMessageById(currentChatId, messageId);
 
-  const selectedMessage = getMessageById(currentChatId, messageId);
+    if (!selectedMessage) return;
 
-  if (!selectedMessage) return;
+    openReplyPreview(selectedMessage, senderName);
+    return;
+  }
 
-  openReplyPreview(selectedMessage, senderName);
+  const editBtn = e.target.closest(".edit-btn");
+  if (editBtn) {
+    const messageId = editBtn.dataset.messageId;
+    if (!messageId || !currentChatId) return;
+
+    const selectedMessage = getMessageById(currentChatId, messageId);
+
+    if (!selectedMessage) return;
+
+    openEditMessageModal(selectedMessage);
+    return;
+  }
+
+  const deleteBtn = e.target.closest(".delete-btn");
+  if (deleteBtn) {
+    const messageId = deleteBtn.dataset.messageId;
+    if (!messageId || !currentChatId) return;
+
+    if (confirm("Bạn có chắc chắn muốn xóa tin nhắn này?")) {
+      handleDeleteMessage(messageId);
+    }
+    return;
+  }
 }
 
 async function handleImageInputChange(e) {
@@ -632,6 +724,70 @@ function openReplyPreview(message, senderName) {
   replyText.textContent = message.content || "[Ảnh]";
   setElementVisible(replyPreview, true, DISPLAY_FLEX);
   messageInput.focus();
+}
+
+function setEditMessageModalVisible(isVisible) {
+  setElementVisible(editMessageModal, isVisible, DISPLAY_FLEX);
+}
+
+function openEditMessageModal(message) {
+  editMessageId.value = normalizeId(message._id);
+  editMessageInput.value = message.content || "";
+  setEditMessageModalVisible(true);
+  editMessageInput.focus();
+}
+
+async function handleEditMessageFormSubmit(e) {
+  e.preventDefault();
+
+  const messageId = editMessageId.value;
+  const newContent = editMessageInput.value.trim();
+
+  if (!messageId || !currentChatId) return;
+
+  try {
+    const data = await fetchJSON(`/api/message/${messageId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chatId: currentChatId,
+        content: newContent,
+      }),
+    });
+
+    if (data.userMessage) {
+      setEditMessageModalVisible(false);
+      editMessageForm.reset();
+    }
+  } catch (error) {
+    console.error("Error editing message:", error);
+    alert("Lỗi khi chỉnh sửa tin nhắn");
+  }
+}
+
+async function handleDeleteMessage(messageId) {
+  if (!currentChatId) return;
+
+  try {
+    const data = await fetchJSON(`/api/message/${messageId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chatId: currentChatId,
+      }),
+    });
+
+    if (data.deletedMessage) {
+      console.log("Tin nhắn đã xóa", data.deletedMessage);
+    }
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    alert("Lỗi khi xóa tin nhắn");
+  }
 }
 
 function rerenderSidebarLists() {

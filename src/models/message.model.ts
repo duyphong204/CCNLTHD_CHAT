@@ -6,6 +6,10 @@ export interface MessageDocument extends Document {
   content?: string;
   image?: string;
   replyTo?: mongoose.Types.ObjectId;
+  isEdit: boolean;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,7 +23,8 @@ const messageSchema = new Schema<MessageDocument>(
     },
     content: { type: String }, // Nội dung tin nhắn bằng văn bản (text).
     image: { type: String },
-    sender: { // Người gửi tin nhắn này.
+    sender: {
+      // Người gửi tin nhắn này.
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -29,10 +34,18 @@ const messageSchema = new Schema<MessageDocument>(
       ref: "Message", // Tham chiếu đến tin nhắn gốc nếu đây là một tin nhắn trả lời (Reply).
       default: null,
     },
+    isEdit: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    deletedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const MessageModel = mongoose.model<MessageDocument>("Message", messageSchema);

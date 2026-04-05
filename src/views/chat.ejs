@@ -149,6 +149,26 @@
       </div>
     </div>
 
+    <!-- Modal Edit Message -->
+    <div id="editMessageModal" class="modal is-hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Chỉnh sửa tin nhắn</h2>
+        </div>
+        <form id="editMessageForm" class="modal-body">
+          <div class="form-group">
+            <label for="editMessageInput">Nội dung tin nhắn</label>
+            <textarea id="editMessageInput" name="content" rows="3" required></textarea>
+          </div>
+          <input type="hidden" id="editMessageId" name="messageId" />
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel-edit">Hủy</button>
+            <button type="submit" class="btn-submit">Lưu thay đổi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="/js/chat.js"></script>
   </body>

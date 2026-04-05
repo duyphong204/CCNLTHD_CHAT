@@ -14,7 +14,6 @@ import { swaggerSpec } from "./config/swagger.config";
 import cors from "cors";
 import express, { Request, Response } from "express";
 import "dotenv/config";
-import viewRouter from "./routes/view.route";
 
 const app = express();
 const server = http.createServer(app);
@@ -43,9 +42,8 @@ app.use(passport.initialize());
 app.use(passport.initialize());
 
 // Routes API
-app.use("/", viewRouter);
-app.use("/api", rootRouter);
 app.use("/", rootRouter);
+app.use("/api", rootRouter);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(errorHandler);
 

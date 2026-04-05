@@ -3,7 +3,10 @@ import MessageModel, { MessageDocument } from "../models/message.model";
 import mongoose from "mongoose";
 import { IMessageRepository } from "../@types/repository.interface";
 
-export class MessageRepository extends BaseRepository<MessageDocument> implements IMessageRepository {
+export class MessageRepository
+  extends BaseRepository<MessageDocument>
+  implements IMessageRepository
+{
   constructor() {
     super(MessageModel);
   }
@@ -22,6 +25,10 @@ export class MessageRepository extends BaseRepository<MessageDocument> implement
       })
       .sort({ createdAt: 1 })
       .exec();
+  }
+
+  async findById(id: string): Promise<MessageDocument | null> {
+    return this.model.findById(id);
   }
 
   async createMessage(data: {
@@ -45,5 +52,12 @@ export class MessageRepository extends BaseRepository<MessageDocument> implement
 
   async findLastMessage(chatId: string): Promise<MessageDocument | null> {
     return this.model.findOne({ chatId }).sort({ createdAt: -1 }).exec();
+  }
+
+  async findLastMessageInChat(chatId: string): Promise<MessageDocument | null> {
+    return this.model
+      .findOne({ chatId, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 }

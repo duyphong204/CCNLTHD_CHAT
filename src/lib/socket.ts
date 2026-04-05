@@ -120,7 +120,7 @@ export const emitNewChatToParticipants = (
   }
 };
 
-// gửi tin nhắn mới đến phòng chat (trừ người gửi)
+// GỬI tin nhắn mới đến phòng chat (trừ người gửi)
 export const emitNewMessageToChatRoom = (
   senderId: string,
   chatId: string,
@@ -129,15 +129,47 @@ export const emitNewMessageToChatRoom = (
   const io = getIO();
   const senderSocketId = onlineUsers.get(senderId?.toString());
 
-  console.log(senderId, "senderId");
+  console.log(senderId, " - senderId");
   console.log(senderSocketId, "sender socketid exist");
-  console.log("All online users:", Object.fromEntries(onlineUsers));
+  console.log("All online users: ", Object.fromEntries(onlineUsers));
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`).except(senderSocketId).emit("message:new", message);
   } else {
     io.to(`chat:${chatId}`).emit("message:new", message);
   }
+};
+
+// CHỈNH SỬA tin nhắn
+export const emitEditMessageToChatRoom = (
+  editorId: string,
+  chatId: string,
+  message: any,
+) => {
+  const io = getIO();
+  const editorSocketId = onlineUsers.get(editorId?.toString());
+
+  console.log(editorId, " - editorId");
+  console.log(editorSocketId, "sender socketid exist");
+  console.log("All online users: ", Object.fromEntries(onlineUsers));
+
+  io.to(`chat:${chatId}`).emit("message:edit", message);
+};
+
+// THU HỒI tin nhắn
+export const emitDeleteMessageToChatRoom = (
+  userId: string,
+  chatId: string,
+  lastMessage: any,
+) => {
+  const io = getIO();
+  const editorSocketId = onlineUsers.get(userId?.toString());
+
+  console.log(userId, " - editorId");
+  console.log(editorSocketId, "sender socketid exist");
+  console.log("All online users: ", Object.fromEntries(onlineUsers));
+
+  io.to(`chat:${chatId}`).emit("message:delete", lastMessage);
 };
 
 // gửi tin nhắn cuối cùng đến tất cả người trong chat

@@ -56,4 +56,20 @@ export interface IMessageService {
       replyToId?: string;
     },
   ): Promise<any>;
+  editMessageService(
+    userId: string,
+    body: {
+      chatId: string;
+      messageId: string;
+      content?: string;
+    },
+  ): Promise<any>;
+
+  deleteMessageService(
+    userId: string,
+    body: {
+      chatId: string;
+      messageId: string;
+    },
+  ): Promise<any>;
 }

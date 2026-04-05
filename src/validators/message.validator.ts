@@ -10,3 +10,9 @@ export const sendMessageSchema = z
     message: "Nội dung hoặc hình ảnh là bắt buộc",
     path: ["content"], // Hiển thị lỗi ở input content
   });
+
+export const editMessageSchema = z.object({
+  chatId: z.string().trim().min(1),
+  messageId: z.string().trim().min(1),
+  content: z.string().trim().optional(),
+});
