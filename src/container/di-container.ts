@@ -27,6 +27,7 @@ import { MessageService } from "../services/message.service";
 import { UserService } from "../services/user.service";
 import { AuthController } from "../controllers/auth.controller";
 import { ChatController } from "../controllers/chat.controller";
+import { MessageController } from "../controllers/message.controller";
 import { UserController } from "../controllers/user.controller";
 
 class DIContainer {
@@ -46,6 +47,7 @@ class DIContainer {
   // Controllers
   private _authController: AuthController | null = null;
   private _chatController: ChatController | null = null;
+  private _messageController: MessageController | null = null;
   private _userController: UserController | null = null;
 
   private constructor() {}
@@ -133,6 +135,13 @@ class DIContainer {
     return this._chatController;
   }
 
+  getMessageController(): MessageController {
+    if (!this._messageController) {
+      this._messageController = new MessageController(this.getMessageService());
+    }
+    return this._messageController;
+  }
+
   getUserController(): UserController {
     if (!this._userController) {
       this._userController = new UserController(this.getUserService());
@@ -152,6 +161,7 @@ class DIContainer {
     this._messageService = null;
     this._authController = null;
     this._chatController = null;
+    this._messageController = null;
     this._userController = null;
   }
 }

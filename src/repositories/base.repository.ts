@@ -24,18 +24,26 @@ export abstract class BaseRepository<T extends Document> {
     return this.model.find(filter).exec();
   }
 
+  async findAll(
+    filter: FilterQuery<T>,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<T[]> {
+    return this.model
+      .find(filter)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async create(data: Partial<T>): Promise<T> {
     const document = new this.model(data);
     return document.save();
   }
 
-  async updateById(
-    id: string,
-    update: UpdateQuery<T>
-  ): Promise<T | null> {
-    return this.model
-      .findByIdAndUpdate(id, update, { new: true })
-      .exec();
+  async updateById(id: string, update: UpdateQuery<T>): Promise<T | null> {
+    return this.model.findByIdAndUpdate(id, update, { new: true }).exec();
   }
 
   async deleteById(id: string): Promise<boolean> {
@@ -45,7 +53,7 @@ export abstract class BaseRepository<T extends Document> {
 
   async findAndPopulate(
     filter: FilterQuery<T>,
-    populate: string | string[]
+    populate: string | string[],
   ): Promise<T | null> {
     return this.model.findOne(filter).populate(populate).exec();
   }

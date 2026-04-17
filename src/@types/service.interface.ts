@@ -31,6 +31,20 @@ export interface IUserService {
     body: UpdateProfileSchemaType,
   ): Promise<UserDocument>;
   changePassword(userId: string, body: ChangePasswordSchemaType): Promise<void>;
+
+  /**
+   * Tìm kiếm và phân trang user
+   * @param query Từ khóa tìm kiếm (tên hoặc email)
+   * @param page Trang hiện tại
+   * @param limit Số lượng mỗi trang
+   * @returns Danh sách user và tổng số lượng
+   */
+  searchUsers(
+    query: string,
+    page: number,
+    limit: number,
+    excludeUserId?: string,
+  ): Promise<{ users: UserDocument[]; total: number }>;
 }
 
 /**
@@ -65,6 +79,22 @@ export interface IMessageService {
       content?: string;
       image?: string;
       replyToId?: string;
+    },
+  ): Promise<any>;
+  editMessageService(
+    userId: string,
+    body: {
+      chatId: string;
+      messageId: string;
+      content?: string;
+    },
+  ): Promise<any>;
+
+  deleteMessageService(
+    userId: string,
+    body: {
+      chatId: string;
+      messageId: string;
     },
   ): Promise<any>;
 }
