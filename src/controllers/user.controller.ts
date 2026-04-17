@@ -14,6 +14,26 @@ export class UserController {
     this.userService = userService;
   }
 
+  searchUsers = asyncHandler(async (req: Request, res: Response) => {
+    const { q = "", page = 1, limit = 10 } = req.query;
+    const userId = req.user?._id;
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 10;
+    const { users, total } = await this.userService.searchUsers(
+      String(q),
+      pageNum,
+      limitNum,
+      userId,
+    );
+    return res.status(HTTPSTATUS.OK).json({
+      message: "Tìm kiếm người dùng thành công",
+      users,
+      total,
+      page: pageNum,
+      limit: limitNum,
+    });
+  });
+
   getUsers = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?._id;
     const users = await this.userService.getUsers(userId);

@@ -17,6 +17,15 @@ export class UserService implements IUserService {
     this.userRepository = userRepository;
   }
 
+  async searchUsers(
+    query: string,
+    page: number,
+    limit: number,
+    excludeUserId?: string,
+  ) {
+    return this.userRepository.searchUsers(query, page, limit, excludeUserId);
+  }
+
   private isCloudinaryUrl(url: string): boolean {
     return /^https?:\/\/res\.cloudinary\.com\/.+/i.test(url);
   }

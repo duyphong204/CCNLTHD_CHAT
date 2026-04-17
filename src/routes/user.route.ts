@@ -7,6 +7,7 @@ const userController = container.getUserController();
 
 userRoutes
   .use(passportAuthenticateJwt)
+  .get("/search", userController.searchUsers)
   .get("/me", userController.getMyProfile)
   .get("/all", userController.getUsers)
   .patch("/profile", userController.updateProfile)

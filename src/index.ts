@@ -14,6 +14,7 @@ import { swaggerSpec } from "./config/swagger.config";
 import cors from "cors";
 import express, { Request, Response } from "express";
 import "dotenv/config";
+import morgan from "morgan";
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +31,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
+app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
@@ -37,8 +39,6 @@ app.use(
     credentials: true,
   }),
 );
-app.use(passport.initialize());
-
 app.use(passport.initialize());
 
 // Routes API
@@ -49,5 +49,5 @@ app.use(errorHandler);
 
 server.listen(Env.PORT, async () => {
   await connecDB();
-  console.log(`server running ${Env.PORT}`);
+  console.log(`server running http://localhost:${Env.PORT}`);
 });

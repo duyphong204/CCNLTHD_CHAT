@@ -29,20 +29,29 @@ export interface IUserRepository extends IBaseRepository<UserDocument> {
   findByEmailOrCreate(
     data: Partial<UserDocument>,
   ): Promise<UserDocument | null>;
+
+  /**
+   * Tìm kiếm và phân trang user
+   * @param query Từ khóa tìm kiếm (tên hoặc email)
+   * @param page Trang hiện tại
+   * @param limit Số lượng mỗi trang
+   * @param excludeUserId Loại trừ userId này (nếu có)
+   */
+  searchUsers(
+    query: string,
+    page: number,
+    limit: number,
+    excludeUserId?: string,
+  ): Promise<{ users: UserDocument[]; total: number }>;
 }
 
 /**
  * Interface cho ChatRepository
  */
 export interface IChatRepository extends IBaseRepository<ChatDocument> {
-  findByParticipants(
-    participantIds: string[],
-  ): Promise<ChatDocument | null>;
+  findByParticipants(participantIds: string[]): Promise<ChatDocument | null>;
   findUserChats(userId: string): Promise<ChatDocument[]>;
-  findByIdAndUser(
-    chatId: string,
-    userId: string,
-  ): Promise<ChatDocument | null>;
+  findByIdAndUser(chatId: string, userId: string): Promise<ChatDocument | null>;
   createGroupChat(data: {
     participants: string[];
     isGroup: boolean;

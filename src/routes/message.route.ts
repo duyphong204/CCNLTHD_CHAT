@@ -8,7 +8,7 @@ const chatRoutes = Router();
 chatRoutes
   .use(passportAuthenticateJwt)
   .post("/send", messageController.send)
-  .put("/:id", messageController.edit)
+  .patch("/:id", messageController.edit)
   .delete("/:id", messageController.delete);
 
 export default chatRoutes;
